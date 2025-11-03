@@ -1,0 +1,26 @@
+---
+name: Code Style
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["*"]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.25.x
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.25.x
+        id: go
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: run lint test
+        run: |
+          make run-lint
