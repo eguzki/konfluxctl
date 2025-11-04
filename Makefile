@@ -4,9 +4,9 @@ MKFILE_PATH := $(abspath $(firstword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 GO ?= go
 
-include ./make/*.mk
-
 all: help
+
+include ./make/*.mk
 
 # The help target prints out all targets with their descriptions organized
 # beneath their categories. The categories are represented by '##@' and the

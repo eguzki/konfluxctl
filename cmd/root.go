@@ -50,7 +50,7 @@ func GetRootCmd(args []string) *cobra.Command {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 
 	rootCmd.AddCommand(versionCommand())
-	rootCmd.AddCommand(sourcesCommand())
+	rootCmd.AddCommand(imageCommand())
 
 	return rootCmd
 }
