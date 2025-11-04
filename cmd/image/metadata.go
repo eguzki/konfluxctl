@@ -2,16 +2,18 @@ package image
 
 import (
 	"context"
-	_ "crypto/sha256"
+	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
-	"github.com/distribution/reference"
+	konfluxapi "github.com/konflux-ci/release-service/api/v1alpha1"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/kubernetes/scheme"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+
+	"github.com/eguzki/konfluxctl/internal/utils"
 )
 
 //konfluxctl image metadata --image IMAGE_URL
@@ -40,8 +42,44 @@ func MetadataCommand() *cobra.Command {
 	return cmd
 }
 
+type ReleasePlanAdmissionDataComponent struct {
+	Name       string   `json:"name"`
+	Repository string   `json:"repository"`
+	Tags       []string `json:"tags"`
+}
+
+type ReleasePlanAdmissionDataMapping struct {
+	Components []ReleasePlanAdmissionDataComponent `json:"components"`
+}
+
+type ReleasePlanAdmissionData struct {
+	Mappping ReleasePlanAdmissionDataMapping `json:"mapping"`
+}
+
+func releasePlanAdmissionList(ctx context.Context, k8sClient client.Client, imageName string) ([]konfluxapi.ReleasePlanAdmission, error) {
+	rpaList := &konfluxapi.ReleasePlanAdmissionList{}
+	err := k8sClient.List(ctx, rpaList, client.InNamespace("rhtap-releng-tenant"))
+	if err != nil {
+		return nil, err
+	}
+
+	return lo.Filter(rpaList.Items, func(rpa konfluxapi.ReleasePlanAdmission, index int) bool {
+		var data ReleasePlanAdmissionData
+		if err := json.Unmarshal(rpa.Spec.Data.Raw, &data); err != nil {
+			return false
+		}
+
+		return lo.ContainsBy(data.Mappping.Components, func(comp ReleasePlanAdmissionDataComponent) bool {
+			return comp.Repository == imageName
+		})
+	}), nil
+}
+
 func runMetadata(cmd *cobra.Command, args []string) error {
-	_, cancel := context.WithCancel(cmd.Context())
+	scheme := k8sruntime.NewScheme()
+	konfluxapi.AddToScheme(scheme)
+
+	ctx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
 
 	configuration, err := config.GetConfig()
@@ -49,50 +87,27 @@ func runMetadata(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	_, err = client.New(configuration, client.Options{Scheme: scheme.Scheme})
+	k8sClient, err := client.New(configuration, client.Options{Scheme: scheme})
 	if err != nil {
 		return err
 	}
 
-	//topologyKey := client.ObjectKey{Name: "topology", Namespace: topologyNS}
-	//topologyConfigMap := &corev1.ConfigMap{}
-	//err = k8sClient.Get(ctx, topologyKey, topologyConfigMap)
-	//logf.Log.V(1).Info("Reading topology ConfigMap", "object", topologyKey, "error", err)
-	//if err != nil {
-	//	return err
-	//}
-
 	// 1. Parse the reference string
-	ref, err := reference.ParseAnyReference(imageURL)
+	imageRef, err := utils.ParseImageURL(imageURL)
 	if err != nil {
-		log.Fatalf("Error parsing image reference: %v", err)
+		return err
 	}
 
-	// 2. Extract Hostname and Path (Repository)
-	named, ok := ref.(reference.Named)
-	if !ok {
-		log.Fatalf("Reference is not a Named reference: %s", ref.String())
+	rpaList, err := releasePlanAdmissionList(ctx, k8sClient, imageRef.FamiliarName())
+	if err != nil {
+		return err
 	}
 
-	// SplitHostname returns the domain and the remainder (the path/repository)
-	hostname := reference.Domain(named)
-	path := reference.Path(named)
-	familiarName := reference.FamiliarName(named)
-
-	// 3. Extract Digest
-	canonical, ok := ref.(reference.Canonical)
-	if !ok {
-		log.Fatalf("Reference does not contain a digest: %s", ref.String())
+	fmt.Println("releasePlanAdmissionList =====")
+	for _, rpa := range rpaList {
+		fmt.Printf("name: %s\n", rpa.Name)
 	}
-	digest := canonical.Digest().String()
-
-	// 4. Output the results
-	fmt.Println("--- Parsed OCI Image Reference ---")
-	fmt.Printf("Original: %s\n", imageURL)
-	fmt.Printf("Hostname: %s\n", hostname)
-	fmt.Printf("FamiliarName: %s\n", familiarName)
-	fmt.Printf("Path (Repository): %s\n", path)
-	fmt.Printf("Digest: %s\n", digest)
+	fmt.Println("releasePlanAdmissionList =====")
 
 	return nil
 }
