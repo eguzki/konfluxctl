@@ -35,19 +35,19 @@ func ParseImageURL(imageURL string) (ImageURL, error) {
 	// 1. Parse the reference string
 	ref, err := reference.ParseAnyReference(imageURL)
 	if err != nil {
-		return ImageURL{}, fmt.Errorf("Error parsing image reference: %w", err)
+		return ImageURL{}, fmt.Errorf("error parsing image reference: %w", err)
 	}
 
 	// 2. Extract Hostname and Path (Repository)
 	named, ok := ref.(reference.Named)
 	if !ok {
-		return ImageURL{}, fmt.Errorf("Image Reference is not a Named reference: %s", ref.String())
+		return ImageURL{}, fmt.Errorf("image reference is not a named reference: %s", ref.String())
 	}
 
 	// 3. Extract Digest
 	canonical, ok := ref.(reference.Canonical)
 	if !ok {
-		return ImageURL{}, fmt.Errorf("Reference does not contain a digest: %s", ref.String())
+		return ImageURL{}, fmt.Errorf("reference does not contain a digest: %s", ref.String())
 	}
 
 	return ImageURL{

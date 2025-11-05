@@ -77,7 +77,9 @@ func releasePlanAdmissionList(ctx context.Context, k8sClient client.Client, imag
 
 func runMetadata(cmd *cobra.Command, args []string) error {
 	scheme := k8sruntime.NewScheme()
-	konfluxapi.AddToScheme(scheme)
+	if err := konfluxapi.AddToScheme(scheme); err != nil {
+		return err
+	}
 
 	ctx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
