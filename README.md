@@ -44,6 +44,12 @@ konfluxctl [command] [subcommand] [flags]
 | `completion` | Generate autocompletion script for the  specific shell     |
 | `version`    | Print the version number of `konfluxctl`                   |
 
+#### `image`
+
+| Command      | Description                                                |
+| ------------ | ---------------------------------------------------------- |
+| `metadata`      | Inspect Konflux metadata of the image                   |
+
 ### Flags
 
 | Flag               | Description           |
@@ -64,12 +70,7 @@ Generate an autocompletion script for the specified shell.
 | `powershell` | Generate script for PowerShell              |
 | `zsh`        | Generate script for Zsh                     |
 
-#### `image`
-
-| Command      | Description                                                |
-| ------------ | ---------------------------------------------------------- |
-| `metadata`      | Inspect Konflux metadata of the image                   |
-
+#### `metadata`
 
 ### Usage
 
@@ -88,6 +89,8 @@ Flags:
 Global Flags:
   -v, --verbose   verbose output
 ```
+
+>NOTE: requires kube session open to konflux cluster
 
 #### `version`
 
