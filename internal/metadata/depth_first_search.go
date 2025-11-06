@@ -23,6 +23,7 @@ type Path struct {
 	Snapshot             *string  `json:"snapshot"`
 	ComponentName        *string  `json:"componentName"`
 	ImageTags            []string `json:"imageTags"`
+	Advisory             *string  `json:"advisory"`
 }
 
 func (p Path) ToJSON() (string, error) {
@@ -30,6 +31,7 @@ func (p Path) ToJSON() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return string(jsonBytes), nil
 
 }
@@ -55,7 +57,8 @@ Snapshot: %s,
 Component: %s,
 Source URL: %s,
 Source Revision: %s,
-Image Tags: %s`,
+Image Tags: %s,
+Advisory: %s`,
 		lo.FromPtrOr(p.ReleasePlanAdmission, "<nil>"),
 		lo.FromPtrOr(p.Application, "<nil>"),
 		lo.FromPtrOr(p.ReleasePlan, "<nil>"),
@@ -65,6 +68,7 @@ Image Tags: %s`,
 		lo.FromPtrOr(p.SourceURL, "<nil>"),
 		lo.FromPtrOr(p.SourceRevision, "<nil>"),
 		strings.Join(p.ImageTags, ","),
+		lo.FromPtrOr(p.Advisory, "<nil>"),
 	)
 }
 
@@ -77,6 +81,7 @@ func (p Path) IsComplete() bool {
 		p.SourceURL != nil &&
 		p.Snapshot != nil &&
 		p.ComponentName != nil &&
+		p.Advisory != nil &&
 		len(p.ImageTags) != 0
 }
 
