@@ -14,19 +14,37 @@ import (
 	"github.com/eguzki/konfluxctl/internal/utils"
 )
 
-type ReleasePlanAdmissionElement konfluxapi.ReleasePlanAdmission
+type ReleasePlanAdmissionDataComponent struct {
+	Name       string   `json:"name"`
+	Repository string   `json:"repository"`
+	Tags       []string `json:"tags"`
+}
+
+type ReleasePlanAdmissionDataMapping struct {
+	Components []ReleasePlanAdmissionDataComponent `json:"components"`
+}
+
+type ReleasePlanAdmissionData struct {
+	Mappping ReleasePlanAdmissionDataMapping `json:"mapping"`
+}
+
+type ReleasePlanAdmissionElement struct {
+	rawRPA    konfluxapi.ReleasePlanAdmission
+	component ReleasePlanAdmissionDataComponent
+}
 
 func (r *ReleasePlanAdmissionElement) String() string {
-	return fmt.Sprintf("%s: %s", "ReleasePlanAdmission", r.Name)
+	return fmt.Sprintf("%s: %s", "ReleasePlanAdmission", r.rawRPA.Name)
 }
 
 func (r *ReleasePlanAdmissionElement) Visit(path *Path) {
-	path.ReleasePlanAdmission = &r.Name
+	path.ReleasePlanAdmission = &r.rawRPA.Name
+	path.ImageTags = r.component.Tags
 }
 
 func (r *ReleasePlanAdmissionElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {
 	children := []*konfluxapi.ReleasePlan{}
-	for _, matchedReleasePlan := range r.Status.ReleasePlans {
+	for _, matchedReleasePlan := range r.rawRPA.Status.ReleasePlans {
 		namespacedName := strings.Split(matchedReleasePlan.Name, "/")
 
 		releasePlan := &konfluxapi.ReleasePlan{}
@@ -51,20 +69,6 @@ func (r *ReleasePlanAdmissionElement) Children(ctx context.Context, k8sClient cl
 	}), nil
 }
 
-type ReleasePlanAdmissionDataComponent struct {
-	Name       string   `json:"name"`
-	Repository string   `json:"repository"`
-	Tags       []string `json:"tags"`
-}
-
-type ReleasePlanAdmissionDataMapping struct {
-	Components []ReleasePlanAdmissionDataComponent `json:"components"`
-}
-
-type ReleasePlanAdmissionData struct {
-	Mappping ReleasePlanAdmissionDataMapping `json:"mapping"`
-}
-
 func ReleasePlanAdmissionList(ctx context.Context, k8sClient client.Client, imageName string) ([]Element, error) {
 	rpaList := &konfluxapi.ReleasePlanAdmissionList{}
 	err := k8sClient.List(ctx, rpaList, client.InNamespace("rhtap-releng-tenant"))
@@ -72,19 +76,23 @@ func ReleasePlanAdmissionList(ctx context.Context, k8sClient client.Client, imag
 		return nil, err
 	}
 
-	rpaForImageList := lo.Filter(rpaList.Items, func(rpa konfluxapi.ReleasePlanAdmission, index int) bool {
+	return lo.FilterMap(rpaList.Items, func(rpa konfluxapi.ReleasePlanAdmission, index int) (Element, bool) {
 		var data ReleasePlanAdmissionData
 		if err := json.Unmarshal(rpa.Spec.Data.Raw, &data); err != nil {
-			return false
+			return nil, false
 		}
 
-		return lo.ContainsBy(data.Mappping.Components, func(comp ReleasePlanAdmissionDataComponent) bool {
+		component, ok := lo.Find(data.Mappping.Components, func(comp ReleasePlanAdmissionDataComponent) bool {
 			return comp.Repository == imageName
 		})
-	})
 
-	return lo.Map(rpaForImageList, func(e konfluxapi.ReleasePlanAdmission, _ int) Element {
-		tmp := ReleasePlanAdmissionElement(e)
-		return &tmp
+		if !ok {
+			return nil, false
+		}
+
+		return &ReleasePlanAdmissionElement{
+			rawRPA:    rpa,
+			component: component,
+		}, true
 	}), nil
 }

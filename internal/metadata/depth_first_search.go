@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/samber/lo"
@@ -13,14 +14,15 @@ import (
 )
 
 type Path struct {
-	ReleasePlanAdmission *string `json:"releasePlanAdmission"`
-	ReleasePlan          *string `json:"releasePlan"`
-	Release              *string `json:"release"`
-	Application          *string `json:"application"`
-	SourceRevision       *string `json:"sourceRevision"`
-	SourceURL            *string `json:"sourceURL"`
-	Snapshot             *string `json:"snapshot"`
-	ComponentName        *string `json:"componentName"`
+	ReleasePlanAdmission *string  `json:"releasePlanAdmission"`
+	ReleasePlan          *string  `json:"releasePlan"`
+	Release              *string  `json:"release"`
+	Application          *string  `json:"application"`
+	SourceRevision       *string  `json:"sourceRevision"`
+	SourceURL            *string  `json:"sourceURL"`
+	Snapshot             *string  `json:"snapshot"`
+	ComponentName        *string  `json:"componentName"`
+	ImageTags            []string `json:"imageTags"`
 }
 
 func (p Path) ToJSON() (string, error) {
@@ -52,7 +54,8 @@ Release: %s,
 Snapshot: %s,
 Component: %s,
 Source URL: %s,
-Source Revision: %s`,
+Source Revision: %s,
+Image Tags: %s`,
 		lo.FromPtrOr(p.ReleasePlanAdmission, "<nil>"),
 		lo.FromPtrOr(p.Application, "<nil>"),
 		lo.FromPtrOr(p.ReleasePlan, "<nil>"),
@@ -61,6 +64,7 @@ Source Revision: %s`,
 		lo.FromPtrOr(p.ComponentName, "<nil>"),
 		lo.FromPtrOr(p.SourceURL, "<nil>"),
 		lo.FromPtrOr(p.SourceRevision, "<nil>"),
+		strings.Join(p.ImageTags, ","),
 	)
 }
 
@@ -72,20 +76,13 @@ func (p Path) IsComplete() bool {
 		p.SourceRevision != nil &&
 		p.SourceURL != nil &&
 		p.Snapshot != nil &&
-		p.ComponentName != nil
+		p.ComponentName != nil &&
+		len(p.ImageTags) != 0
 }
 
 func (p *Path) Clone() Path {
-	return Path{
-		ReleasePlanAdmission: p.ReleasePlanAdmission,
-		ReleasePlan:          p.ReleasePlan,
-		Release:              p.Release,
-		Application:          p.Application,
-		SourceRevision:       p.SourceRevision,
-		SourceURL:            p.SourceURL,
-		Snapshot:             p.Snapshot,
-		ComponentName:        p.ComponentName,
-	}
+	// shallow copy
+	return *p
 }
 
 type Node struct {
