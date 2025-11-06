@@ -121,7 +121,7 @@ func DepthFirstSearch(ctx context.Context, k8sClient client.Client, imageURL *ut
 
 		for _, child := range children {
 			// prepend
-			queue = append([]Node{Node{Element: child, Path: current.Path.Clone()}}, queue...)
+			queue = append([]Node{{Element: child, Path: current.Path.Clone()}}, queue...)
 		}
 
 		if current.Path.IsComplete() {
