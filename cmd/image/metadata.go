@@ -2,17 +2,17 @@ package image
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
+	applicationapi "github.com/konflux-ci/application-api/api/v1alpha1"
 	konfluxapi "github.com/konflux-ci/release-service/api/v1alpha1"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
+	"github.com/eguzki/konfluxctl/internal/metadata"
 	"github.com/eguzki/konfluxctl/internal/utils"
 )
 
@@ -42,42 +42,12 @@ func MetadataCommand() *cobra.Command {
 	return cmd
 }
 
-type ReleasePlanAdmissionDataComponent struct {
-	Name       string   `json:"name"`
-	Repository string   `json:"repository"`
-	Tags       []string `json:"tags"`
-}
-
-type ReleasePlanAdmissionDataMapping struct {
-	Components []ReleasePlanAdmissionDataComponent `json:"components"`
-}
-
-type ReleasePlanAdmissionData struct {
-	Mappping ReleasePlanAdmissionDataMapping `json:"mapping"`
-}
-
-func releasePlanAdmissionList(ctx context.Context, k8sClient client.Client, imageName string) ([]konfluxapi.ReleasePlanAdmission, error) {
-	rpaList := &konfluxapi.ReleasePlanAdmissionList{}
-	err := k8sClient.List(ctx, rpaList, client.InNamespace("rhtap-releng-tenant"))
-	if err != nil {
-		return nil, err
-	}
-
-	return lo.Filter(rpaList.Items, func(rpa konfluxapi.ReleasePlanAdmission, index int) bool {
-		var data ReleasePlanAdmissionData
-		if err := json.Unmarshal(rpa.Spec.Data.Raw, &data); err != nil {
-			return false
-		}
-
-		return lo.ContainsBy(data.Mappping.Components, func(comp ReleasePlanAdmissionDataComponent) bool {
-			return comp.Repository == imageName
-		})
-	}), nil
-}
-
 func runMetadata(cmd *cobra.Command, args []string) error {
 	scheme := k8sruntime.NewScheme()
 	if err := konfluxapi.AddToScheme(scheme); err != nil {
+		return err
+	}
+	if err := applicationapi.AddToScheme(scheme); err != nil {
 		return err
 	}
 
@@ -100,16 +70,26 @@ func runMetadata(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	rpaList, err := releasePlanAdmissionList(ctx, k8sClient, imageRef.FamiliarName())
+	rpaList, err := metadata.ReleasePlanAdmissionList(ctx, k8sClient, imageRef.FamiliarName())
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("releasePlanAdmissionList =====")
-	for _, rpa := range rpaList {
-		fmt.Printf("name: %s\n", rpa.Name)
+	paths, err := metadata.DepthFirstSearch(ctx, k8sClient, imageRef, rpaList)
+
+	if len(paths) == 0 {
+		fmt.Println("🧐 No metadata found")
+		return nil
+
 	}
-	fmt.Println("releasePlanAdmissionList =====")
+
+	fmt.Println("Paths =====")
+	for _, path := range paths {
+		fmt.Println("Path =====")
+		fmt.Println(path)
+		fmt.Println("")
+	}
+	fmt.Println("Paths =====")
 
 	return nil
 }
