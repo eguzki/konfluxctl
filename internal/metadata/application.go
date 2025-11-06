@@ -17,7 +17,7 @@ func (a *ApplicationElement) String() string {
 }
 
 func (a *ApplicationElement) Visit(path *Path) {
-	path.application = &a.Name
+	path.Application = &a.Name
 }
 
 func (s *ApplicationElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {

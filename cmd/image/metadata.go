@@ -32,7 +32,7 @@ func MetadataCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&imageURL, "image", "", "Docker/OCI image URL (required)")
-	cmd.Flags().StringVarP(&imageMetadataFormat, "output-format", "o", "yaml", "Output format: 'yaml' or 'json'.")
+	cmd.Flags().StringVarP(&imageMetadataFormat, "output-format", "o", "", "Output format: 'yaml' or 'json'.")
 
 	if err := cmd.MarkFlagRequired("image"); err != nil {
 		fmt.Println("Error setting 'image' flag as required:", err)
@@ -76,6 +76,9 @@ func runMetadata(cmd *cobra.Command, args []string) error {
 	}
 
 	paths, err := metadata.DepthFirstSearch(ctx, k8sClient, imageRef, rpaList)
+	if err != nil {
+		return err
+	}
 
 	if len(paths) == 0 {
 		fmt.Println("🧐 No metadata found")
@@ -83,13 +86,22 @@ func runMetadata(cmd *cobra.Command, args []string) error {
 
 	}
 
-	fmt.Println("Paths =====")
-	for _, path := range paths {
-		fmt.Println("Path =====")
-		fmt.Println(path)
-		fmt.Println("")
+	switch imageMetadataFormat {
+	case "json":
+		jsonStr, err := paths[0].ToJSON()
+		if err != nil {
+			return err
+		}
+		_, _ = fmt.Fprintln(cmd.OutOrStdout(), jsonStr)
+	case "yaml":
+		yamlStr, err := paths[0].ToYAML()
+		if err != nil {
+			return err
+		}
+		_, _ = fmt.Fprintln(cmd.OutOrStdout(), yamlStr)
+	default:
+		_, _ = fmt.Fprintln(cmd.OutOrStdout(), paths[0])
 	}
-	fmt.Println("Paths =====")
 
 	return nil
 }

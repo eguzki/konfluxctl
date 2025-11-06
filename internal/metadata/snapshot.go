@@ -20,10 +20,10 @@ func (s *SnapshotElement) String() string {
 }
 
 func (s *SnapshotElement) Visit(path *Path) {
-	path.snapshot = &s.rawSnapshot.Name
-	path.componentName = &s.component.Name
-	path.sourceRevision = &s.component.Source.GitSource.Revision
-	path.sourceURL = &s.component.Source.GitSource.URL
+	path.Snapshot = &s.rawSnapshot.Name
+	path.ComponentName = &s.component.Name
+	path.SourceRevision = &s.component.Source.GitSource.Revision
+	path.SourceURL = &s.component.Source.GitSource.URL
 }
 
 func (s *SnapshotElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {

@@ -4,6 +4,7 @@ go 1.25.3
 
 require (
 	github.com/distribution/reference v0.6.0
+	github.com/ghodss/yaml v1.0.0
 	github.com/konflux-ci/application-api v0.0.0-20250324201748-5a9670bf7679
 	github.com/konflux-ci/release-service v0.0.0-20251104205354-f5c4e0907e81
 	github.com/onsi/ginkgo/v2 v2.27.2

@@ -19,7 +19,7 @@ func (r *ReleaseElement) String() string {
 }
 
 func (r *ReleaseElement) Visit(path *Path) {
-	path.release = &r.Name
+	path.Release = &r.Name
 }
 
 func (r *ReleaseElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {

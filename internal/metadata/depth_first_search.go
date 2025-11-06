@@ -2,23 +2,46 @@ package metadata
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	"github.com/ghodss/yaml"
+	"github.com/samber/lo"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/eguzki/konfluxctl/internal/utils"
-	"github.com/samber/lo"
 )
 
 type Path struct {
-	releasePlanAdmission *string
-	releasePlan          *string
-	release              *string
-	application          *string
-	sourceRevision       *string
-	sourceURL            *string
-	snapshot             *string
-	componentName        *string
+	ReleasePlanAdmission *string `json:"releasePlanAdmission"`
+	ReleasePlan          *string `json:"releasePlan"`
+	Release              *string `json:"release"`
+	Application          *string `json:"application"`
+	SourceRevision       *string `json:"sourceRevision"`
+	SourceURL            *string `json:"sourceURL"`
+	Snapshot             *string `json:"snapshot"`
+	ComponentName        *string `json:"componentName"`
+}
+
+func (p Path) ToJSON() (string, error) {
+	jsonBytes, err := json.Marshal(p)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonBytes), nil
+
+}
+
+func (p Path) ToYAML() (string, error) {
+	jsonBytes, err := json.Marshal(p)
+	if err != nil {
+		return "", err
+	}
+	yamlBytes, err := yaml.JSONToYAML(jsonBytes) // use `omitempty`'s from the json Marshal
+	if err != nil {
+		return "", err
+	}
+	return string(yamlBytes), nil
 }
 
 func (p Path) String() string {
@@ -30,38 +53,38 @@ Snapshot: %s,
 Component: %s,
 Source URL: %s,
 Source Revision: %s`,
-		lo.FromPtrOr(p.releasePlanAdmission, "<nil>"),
-		lo.FromPtrOr(p.application, "<nil>"),
-		lo.FromPtrOr(p.releasePlan, "<nil>"),
-		lo.FromPtrOr(p.release, "<nil>"),
-		lo.FromPtrOr(p.snapshot, "<nil>"),
-		lo.FromPtrOr(p.componentName, "<nil>"),
-		lo.FromPtrOr(p.sourceURL, "<nil>"),
-		lo.FromPtrOr(p.sourceRevision, "<nil>"),
+		lo.FromPtrOr(p.ReleasePlanAdmission, "<nil>"),
+		lo.FromPtrOr(p.Application, "<nil>"),
+		lo.FromPtrOr(p.ReleasePlan, "<nil>"),
+		lo.FromPtrOr(p.Release, "<nil>"),
+		lo.FromPtrOr(p.Snapshot, "<nil>"),
+		lo.FromPtrOr(p.ComponentName, "<nil>"),
+		lo.FromPtrOr(p.SourceURL, "<nil>"),
+		lo.FromPtrOr(p.SourceRevision, "<nil>"),
 	)
 }
 
 func (p Path) IsComplete() bool {
-	return p.releasePlanAdmission != nil &&
-		p.releasePlan != nil &&
-		p.release != nil &&
-		p.application != nil &&
-		p.sourceRevision != nil &&
-		p.sourceURL != nil &&
-		p.snapshot != nil &&
-		p.componentName != nil
+	return p.ReleasePlanAdmission != nil &&
+		p.ReleasePlan != nil &&
+		p.Release != nil &&
+		p.Application != nil &&
+		p.SourceRevision != nil &&
+		p.SourceURL != nil &&
+		p.Snapshot != nil &&
+		p.ComponentName != nil
 }
 
 func (p *Path) Clone() Path {
 	return Path{
-		releasePlanAdmission: p.releasePlanAdmission,
-		releasePlan:          p.releasePlan,
-		release:              p.release,
-		application:          p.application,
-		sourceRevision:       p.sourceRevision,
-		sourceURL:            p.sourceURL,
-		snapshot:             p.snapshot,
-		componentName:        p.componentName,
+		ReleasePlanAdmission: p.ReleasePlanAdmission,
+		ReleasePlan:          p.ReleasePlan,
+		Release:              p.Release,
+		Application:          p.Application,
+		SourceRevision:       p.SourceRevision,
+		SourceURL:            p.SourceURL,
+		Snapshot:             p.Snapshot,
+		ComponentName:        p.ComponentName,
 	}
 }
 
@@ -100,7 +123,6 @@ func DepthFirstSearch(ctx context.Context, k8sClient client.Client, imageURL *ut
 		}
 
 		if current.Path.IsComplete() {
-			fmt.Println("new path")
 			completePaths = append(completePaths, current.Path)
 		}
 	}

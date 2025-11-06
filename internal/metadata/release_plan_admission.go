@@ -21,7 +21,7 @@ func (r *ReleasePlanAdmissionElement) String() string {
 }
 
 func (r *ReleasePlanAdmissionElement) Visit(path *Path) {
-	path.releasePlanAdmission = &r.Name
+	path.ReleasePlanAdmission = &r.Name
 }
 
 func (r *ReleasePlanAdmissionElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {
