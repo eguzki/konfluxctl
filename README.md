@@ -39,7 +39,7 @@ konfluxctl [command] [subcommand] [flags]
 
 | Command      | Description                                                |
 | ------------ | ---------------------------------------------------------- |
-| `sources`    | print build sources                                        |
+| `image`      | Docker/OCI image related subcommands                       |
 | `help`       | Help about any command                                     |
 | `completion` | Generate autocompletion script for the  specific shell     |
 | `version`    | Print the version number of `konfluxctl`                   |
@@ -64,15 +64,29 @@ Generate an autocompletion script for the specified shell.
 | `powershell` | Generate script for PowerShell              |
 | `zsh`        | Generate script for Zsh                     |
 
-#### `sources`
+#### `image`
 
-Find sources used to build provided asset.
+| Command      | Description                                                |
+| ------------ | ---------------------------------------------------------- |
+| `metadata`      | Inspect Konflux metadata of the image                   |
 
 
 ### Usage
 
 ```shell
-$ konfluxctl sources -h
+$ konfluxctl image metadata -h
+Returns Docker/OCI image related konflux metadata
+
+Usage:
+  konfluxctl image metadata [flags]
+
+Flags:
+  -h, --help                   help for metadata
+      --image string           Docker/OCI image URL (required)
+  -o, --output-format string   Output format: 'yaml' or 'json'.
+
+Global Flags:
+  -v, --verbose   verbose output
 ```
 
 #### `version`
