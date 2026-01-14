@@ -70,4 +70,4 @@ clean-cov: ## Remove coverage reports
 
 .PHONY: run-lint
 run-lint: $(GOLANGCI-LINT) ## Run linter tool (golangci-lint)
-	$(GOLANGCI-LINT) run --timeout 2m
+	$(GOLANGCI-LINT) run --timeout 5m

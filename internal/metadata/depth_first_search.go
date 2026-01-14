@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -111,7 +112,7 @@ func DepthFirstSearch(ctx context.Context, k8sClient client.Client, imageURL *ut
 
 	for len(queue) > 0 {
 		current := queue[0]
-		//fmt.Printf("node: %s\n", current.Element.String())
+		slog.Debug("DepthFirstSearch ", "queue lenght", len(queue), "element", current.Element.String())
 		queue = queue[1:]
 		current.Element.Visit(&current.Path)
 		children, err := current.Element.Children(ctx, k8sClient, imageURL)

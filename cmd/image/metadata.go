@@ -3,6 +3,7 @@ package image
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 
 	applicationapi "github.com/konflux-ci/application-api/api/v1alpha1"
@@ -70,10 +71,14 @@ func runMetadata(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	slog.Debug("metadata", "image ref", imageRef)
+
 	rpaList, err := metadata.ReleasePlanAdmissionList(ctx, k8sClient, imageRef.FamiliarName())
 	if err != nil {
 		return err
 	}
+
+	slog.Debug("metadata", "releaseplanadmission (rpa) candidates", len(rpaList))
 
 	paths, err := metadata.DepthFirstSearch(ctx, k8sClient, imageRef, rpaList)
 	if err != nil {

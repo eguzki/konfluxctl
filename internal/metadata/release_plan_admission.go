@@ -14,10 +14,14 @@ import (
 	"github.com/eguzki/konfluxctl/internal/utils"
 )
 
+type Repository struct {
+	Url  string   `json:"url"`
+	Tags []string `json:"tags"`
+}
+
 type ReleasePlanAdmissionDataComponent struct {
-	Name       string   `json:"name"`
-	Repository string   `json:"repository"`
-	Tags       []string `json:"tags"`
+	Name         string       `json:"name"`
+	Repositories []Repository `json:"repositories"`
 }
 
 type ReleasePlanAdmissionDataMapping struct {
@@ -29,8 +33,8 @@ type ReleasePlanAdmissionData struct {
 }
 
 type ReleasePlanAdmissionElement struct {
-	rawRPA    konfluxapi.ReleasePlanAdmission
-	component ReleasePlanAdmissionDataComponent
+	rawRPA konfluxapi.ReleasePlanAdmission
+	tags   []string
 }
 
 func (r *ReleasePlanAdmissionElement) String() string {
@@ -39,7 +43,7 @@ func (r *ReleasePlanAdmissionElement) String() string {
 
 func (r *ReleasePlanAdmissionElement) Visit(path *Path) {
 	path.ReleasePlanAdmission = &r.rawRPA.Name
-	path.ImageTags = r.component.Tags
+	path.ImageTags = r.tags
 }
 
 func (r *ReleasePlanAdmissionElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {
@@ -82,8 +86,12 @@ func ReleasePlanAdmissionList(ctx context.Context, k8sClient client.Client, imag
 			return nil, false
 		}
 
-		component, ok := lo.Find(data.Mappping.Components, func(comp ReleasePlanAdmissionDataComponent) bool {
-			return comp.Repository == imageName
+		repositories := lo.FlatMap(data.Mappping.Components, func(comp ReleasePlanAdmissionDataComponent, _ int) []Repository {
+			return comp.Repositories
+		})
+
+		repository, ok := lo.Find(repositories, func(repo Repository) bool {
+			return repo.Url == imageName
 		})
 
 		if !ok {
@@ -91,8 +99,8 @@ func ReleasePlanAdmissionList(ctx context.Context, k8sClient client.Client, imag
 		}
 
 		return &ReleasePlanAdmissionElement{
-			rawRPA:    rpa,
-			component: component,
+			rawRPA: rpa,
+			tags:   repository.Tags,
 		}, true
 	}), nil
 }
