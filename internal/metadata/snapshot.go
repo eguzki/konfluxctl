@@ -26,7 +26,7 @@ func (s *SnapshotElement) Visit(path *Path) {
 	path.SourceURL = &s.component.Source.GitSource.URL
 }
 
-func (s *SnapshotElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {
+func (s *SnapshotElement) Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient utils.KubeArchiveClient, imageURL *utils.ImageURL) ([]Element, error) {
 	application := &applicationapi.Application{}
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Namespace: s.rawSnapshot.Namespace,

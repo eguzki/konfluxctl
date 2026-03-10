@@ -8,6 +8,7 @@ import (
 	applicationapi "github.com/konflux-ci/application-api/api/v1alpha1"
 	konfluxapi "github.com/konflux-ci/release-service/api/v1alpha1"
 	"github.com/samber/lo"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -41,14 +42,23 @@ func (r *ReleaseElement) Visit(path *Path) {
 	}
 }
 
-func (r *ReleaseElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {
+func (r *ReleaseElement) Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient utils.KubeArchiveClient, imageURL *utils.ImageURL) ([]Element, error) {
 	snapshot := &applicationapi.Snapshot{}
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Namespace: r.Namespace,
 		Name:      r.Spec.Snapshot,
 	}, snapshot)
-	if err != nil {
+
+	if err != nil && !errors.IsNotFound(err) {
 		return nil, err
+	}
+
+	if errors.IsNotFound(err) {
+		// Only if not found, try kubearchive
+		*snapshot, err = kubeArchiveClient.GetSnapshot(ctx, r.Namespace, r.Spec.Snapshot)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	component, ok := lo.Find(snapshot.Spec.Components, func(comp applicationapi.SnapshotComponent) bool {

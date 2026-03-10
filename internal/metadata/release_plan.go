@@ -22,14 +22,19 @@ func (r *ReleasePlanElement) Visit(path *Path) {
 	path.ReleasePlan = &r.Name
 }
 
-func (r *ReleasePlanElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {
+func (r *ReleasePlanElement) Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient utils.KubeArchiveClient, imageURL *utils.ImageURL) ([]Element, error) {
 	releaseList := &konfluxapi.ReleaseList{}
 	err := k8sClient.List(ctx, releaseList, client.InNamespace(r.Namespace))
 	if err != nil {
 		return nil, err
 	}
 
-	planReleaseList := lo.Filter(releaseList.Items, func(release konfluxapi.Release, _ int) bool {
+	releaseListFromArchive, err := kubeArchiveClient.GetReleases(ctx, r.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	planReleaseList := lo.Filter(append(releaseList.Items, releaseListFromArchive.Items...), func(release konfluxapi.Release, _ int) bool {
 		return release.Spec.ReleasePlan == r.Name &&
 			meta.IsStatusConditionTrue(release.Status.Conditions, "Released")
 	})

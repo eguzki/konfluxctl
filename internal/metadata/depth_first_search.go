@@ -98,11 +98,11 @@ type Node struct {
 
 type Element interface {
 	Visit(path *Path)
-	Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error)
+	Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient utils.KubeArchiveClient, imageURL *utils.ImageURL) ([]Element, error)
 	String() string
 }
 
-func DepthFirstSearch(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL, elements []Element) ([]Path, error) {
+func DepthFirstSearch(ctx context.Context, k8sClient client.Client, kubeArchiveClient utils.KubeArchiveClient, imageURL *utils.ImageURL, elements []Element) ([]Path, error) {
 	completePaths := []Path{}
 	queue := []Node{}
 
@@ -115,7 +115,7 @@ func DepthFirstSearch(ctx context.Context, k8sClient client.Client, imageURL *ut
 		slog.Debug("DepthFirstSearch ", "queue lenght", len(queue), "element", current.Element.String())
 		queue = queue[1:]
 		current.Element.Visit(&current.Path)
-		children, err := current.Element.Children(ctx, k8sClient, imageURL)
+		children, err := current.Element.Children(ctx, k8sClient, kubeArchiveClient, imageURL)
 		if err != nil {
 			return nil, err
 		}
