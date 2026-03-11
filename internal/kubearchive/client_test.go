@@ -96,7 +96,7 @@ var _ = Describe("KubeArchive Client", func() {
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(expectedSnapshot)
+				Expect(json.NewEncoder(w).Encode(expectedSnapshot)).NotTo(HaveOccurred())
 			}))
 
 			client = &KubeArchiveHTTPClient{
@@ -118,7 +118,7 @@ var _ = Describe("KubeArchive Client", func() {
 			server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusNotFound)
-				w.Write([]byte(`{"error": "not found"}`))
+				Expect(w.Write([]byte(`{"error": "not found"}`))).NotTo(HaveOccurred())
 			}))
 
 			client = &KubeArchiveHTTPClient{
@@ -138,7 +138,7 @@ var _ = Describe("KubeArchive Client", func() {
 			server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte(`{invalid json`))
+				Expect(w.Write([]byte(`{invalid json`))).NotTo(HaveOccurred())
 			}))
 
 			client = &KubeArchiveHTTPClient{
@@ -199,7 +199,7 @@ var _ = Describe("KubeArchive Client", func() {
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(releaseList)
+				Expect(json.NewEncoder(w).Encode(releaseList)).NotTo(HaveOccurred())
 			}))
 
 			client = &KubeArchiveHTTPClient{
@@ -239,7 +239,8 @@ var _ = Describe("KubeArchive Client", func() {
 				continueToken := r.URL.Query().Get("continue")
 
 				var releaseList konfluxapi.ReleaseList
-				if continueToken == "" {
+				switch continueToken {
+				case "":
 					// First page
 					releaseList = konfluxapi.ReleaseList{
 						ListMeta: metav1.ListMeta{
@@ -247,7 +248,7 @@ var _ = Describe("KubeArchive Client", func() {
 						},
 						Items: page1,
 					}
-				} else if continueToken == "token-page-2" {
+				case "token-page-2":
 					// Second page
 					releaseList = konfluxapi.ReleaseList{
 						Items: page2,
@@ -256,7 +257,7 @@ var _ = Describe("KubeArchive Client", func() {
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(releaseList)
+				Expect(json.NewEncoder(w).Encode(releaseList)).NotTo(HaveOccurred())
 			}))
 
 			client = &KubeArchiveHTTPClient{
@@ -290,7 +291,7 @@ var _ = Describe("KubeArchive Client", func() {
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(releaseList)
+				Expect(json.NewEncoder(w).Encode(releaseList)).NotTo(HaveOccurred())
 			}))
 
 			client = &KubeArchiveHTTPClient{
@@ -315,7 +316,7 @@ var _ = Describe("KubeArchive Client", func() {
 			server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error": "unauthorized"}`))
+				Expect(w.Write([]byte(`{"error": "unauthorized"}`))).NotTo(HaveOccurred())
 			}))
 
 			client = &KubeArchiveHTTPClient{
@@ -352,12 +353,12 @@ var _ = Describe("KubeArchive Client", func() {
 					}
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusOK)
-					json.NewEncoder(w).Encode(releaseList)
+					Expect(json.NewEncoder(w).Encode(releaseList)).NotTo(HaveOccurred())
 				} else {
 					// Second page fails
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(`{"error": "server error"}`))
+					Expect(w.Write([]byte(`{"error": "server error"}`))).NotTo(HaveOccurred())
 				}
 			}))
 

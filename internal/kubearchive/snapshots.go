@@ -40,7 +40,11 @@ func (k *KubeArchiveHTTPClient) GetSnapshot(ctx context.Context, ns, name string
 	if err != nil {
 		return applicationapi.Snapshot{}, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			slog.Error("failed to close response body", "error", closeErr)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return applicationapi.Snapshot{}, handleJsonErrResp(resp)

@@ -62,7 +62,11 @@ func (k *KubeArchiveHTTPClient) getReleases(ctx context.Context, ns, continueTok
 	if err != nil {
 		return konfluxapi.ReleaseList{}, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			slog.Error("failed to close response body", "error", closeErr)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return konfluxapi.ReleaseList{}, handleJsonErrResp(resp)

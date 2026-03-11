@@ -60,7 +60,7 @@ var _ = Describe("Memoization", func() {
 				atomic.AddInt32(&requestCount, 1)
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(expectedSnapshot)
+				Expect(json.NewEncoder(w).Encode(expectedSnapshot)).NotTo(HaveOccurred())
 			}))
 			defer server.Close()
 
@@ -104,7 +104,7 @@ var _ = Describe("Memoization", func() {
 				}
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(snapshot)
+				Expect(json.NewEncoder(w).Encode(snapshot)).NotTo(HaveOccurred())
 			}))
 			defer server.Close()
 
@@ -145,7 +145,7 @@ var _ = Describe("Memoization", func() {
 				releaseList := konfluxapi.ReleaseList{Items: releases}
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(releaseList)
+				Expect(json.NewEncoder(w).Encode(releaseList)).NotTo(HaveOccurred())
 			}))
 			defer server.Close()
 
@@ -195,7 +195,7 @@ var _ = Describe("Memoization", func() {
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(releaseList)
+				Expect(json.NewEncoder(w).Encode(releaseList)).NotTo(HaveOccurred())
 			}))
 			defer server.Close()
 
@@ -240,7 +240,7 @@ var _ = Describe("Memoization", func() {
 				releaseList := konfluxapi.ReleaseList{Items: releases}
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(releaseList)
+				Expect(json.NewEncoder(w).Encode(releaseList)).NotTo(HaveOccurred())
 			}))
 			defer server.Close()
 
