@@ -103,6 +103,8 @@ var _ = Describe("KubeArchive Client", func() {
 				httpClient:          server.Client(),
 				kubeArchiveHostname: server.URL[7:], // Remove "http://"
 				scheme:              "http",
+				releasesCache:       make(map[string]konfluxapi.ReleaseList),
+				snapshotsCache:      make(map[string]applicationapi.Snapshot),
 			}
 
 			snapshot, err := client.GetSnapshot(ctx, namespace, snapshotName)
@@ -123,6 +125,8 @@ var _ = Describe("KubeArchive Client", func() {
 				httpClient:          server.Client(),
 				kubeArchiveHostname: server.URL[7:],
 				scheme:              "http",
+				releasesCache:       make(map[string]konfluxapi.ReleaseList),
+				snapshotsCache:      make(map[string]applicationapi.Snapshot),
 			}
 
 			_, err := client.GetSnapshot(ctx, namespace, snapshotName)
@@ -141,6 +145,8 @@ var _ = Describe("KubeArchive Client", func() {
 				httpClient:          server.Client(),
 				kubeArchiveHostname: server.URL[7:],
 				scheme:              "http",
+				releasesCache:       make(map[string]konfluxapi.ReleaseList),
+				snapshotsCache:      make(map[string]applicationapi.Snapshot),
 			}
 
 			_, err := client.GetSnapshot(ctx, namespace, snapshotName)
@@ -200,6 +206,8 @@ var _ = Describe("KubeArchive Client", func() {
 				httpClient:          server.Client(),
 				kubeArchiveHostname: server.URL[7:],
 				scheme:              "http",
+				releasesCache:       make(map[string]konfluxapi.ReleaseList),
+				snapshotsCache:      make(map[string]applicationapi.Snapshot),
 			}
 
 			iter := client.GetReleasesIterator(ctx, namespace)
@@ -255,6 +263,8 @@ var _ = Describe("KubeArchive Client", func() {
 				httpClient:          server.Client(),
 				kubeArchiveHostname: server.URL[7:],
 				scheme:              "http",
+				releasesCache:       make(map[string]konfluxapi.ReleaseList),
+				snapshotsCache:      make(map[string]applicationapi.Snapshot),
 			}
 
 			iter := client.GetReleasesIterator(ctx, namespace)
@@ -287,6 +297,8 @@ var _ = Describe("KubeArchive Client", func() {
 				httpClient:          server.Client(),
 				kubeArchiveHostname: server.URL[7:],
 				scheme:              "http",
+				releasesCache:       make(map[string]konfluxapi.ReleaseList),
+				snapshotsCache:      make(map[string]applicationapi.Snapshot),
 			}
 
 			iter := client.GetReleasesIterator(ctx, namespace)
@@ -310,6 +322,8 @@ var _ = Describe("KubeArchive Client", func() {
 				httpClient:          server.Client(),
 				kubeArchiveHostname: server.URL[7:],
 				scheme:              "http",
+				releasesCache:       make(map[string]konfluxapi.ReleaseList),
+				snapshotsCache:      make(map[string]applicationapi.Snapshot),
 			}
 
 			iter := client.GetReleasesIterator(ctx, namespace)
@@ -351,6 +365,8 @@ var _ = Describe("KubeArchive Client", func() {
 				httpClient:          server.Client(),
 				kubeArchiveHostname: server.URL[7:],
 				scheme:              "http",
+				releasesCache:       make(map[string]konfluxapi.ReleaseList),
+				snapshotsCache:      make(map[string]applicationapi.Snapshot),
 			}
 
 			iter := client.GetReleasesIterator(ctx, namespace)

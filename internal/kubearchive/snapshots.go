@@ -13,7 +13,17 @@ import (
 
 // GetSnapshot retrieves a specific snapshot by name from the specified namespace in the archive.
 // Returns an error if the snapshot is not found or if the request fails.
+// Successful results are memoized to avoid redundant API calls.
 func (k *KubeArchiveHTTPClient) GetSnapshot(ctx context.Context, ns, name string) (applicationapi.Snapshot, error) {
+	// Create cache key
+	cacheKey := fmt.Sprintf("snapshot:%s:%s", ns, name)
+
+	// Check cache first
+	if cachedResult, found := k.snapshotsCache[cacheKey]; found {
+		slog.Debug("kubearchive client", "GetSnapshot", "cache hit", "key", cacheKey)
+		return cachedResult, nil
+	}
+
 	u := &url.URL{
 		Scheme: k.scheme,
 		Host:   k.kubeArchiveHostname,
@@ -44,6 +54,9 @@ func (k *KubeArchiveHTTPClient) GetSnapshot(ctx context.Context, ns, name string
 			err:  fmt.Sprintf("decoding error - %s", err.Error()),
 		}
 	}
+
+	// Cache successful result
+	k.snapshotsCache[cacheKey] = decodeInto
 
 	return decodeInto, nil
 }

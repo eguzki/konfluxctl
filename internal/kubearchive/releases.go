@@ -28,7 +28,17 @@ func (k *KubeArchiveHTTPClient) GetReleasesIterator(ctx context.Context, ns stri
 // getReleases fetches a page of releases from the archive with optional pagination.
 // If continueToken is provided, it fetches the next page starting from that token.
 // Returns a ReleaseList containing items and a continue token for the next page (if any).
+// Successful results are memoized to avoid redundant API calls.
 func (k *KubeArchiveHTTPClient) getReleases(ctx context.Context, ns, continueToken string) (konfluxapi.ReleaseList, error) {
+	// Create cache key
+	cacheKey := fmt.Sprintf("releases:%s:%s", ns, continueToken)
+
+	// Check cache first
+	if cachedResult, found := k.releasesCache[cacheKey]; found {
+		slog.Debug("kubearchive client", "getReleases", "cache hit", "key", cacheKey)
+		return cachedResult, nil
+	}
+
 	u := &url.URL{
 		Scheme: k.scheme,
 		Host:   k.kubeArchiveHostname,
@@ -66,6 +76,9 @@ func (k *KubeArchiveHTTPClient) getReleases(ctx context.Context, ns, continueTok
 			err:  fmt.Sprintf("decoding error - %s", err.Error()),
 		}
 	}
+
+	// Cache successful result
+	k.releasesCache[cacheKey] = decodeInto
 
 	return decodeInto, nil
 }

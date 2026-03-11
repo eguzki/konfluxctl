@@ -38,10 +38,15 @@ type ReleaseIterator interface {
 }
 
 // KubeArchiveHTTPClient implements Client using HTTP requests to the KubeArchive API.
+// Results are memoized to avoid redundant API calls.
 type KubeArchiveHTTPClient struct {
 	httpClient          *http.Client
 	kubeArchiveHostname string
 	scheme              string // defaults to "https", can be overridden for testing
+
+	// Memoization caches for successful results only
+	releasesCache  map[string]konfluxapi.ReleaseList
+	snapshotsCache map[string]applicationapi.Snapshot
 }
 
 func kubeArchiveHostnameFromClusterHostname(clusterAPIHost string) string {
@@ -54,6 +59,7 @@ func kubeArchiveHostnameFromClusterHostname(clusterAPIHost string) string {
 // ClientFor creates a new KubeArchive client using the provided Kubernetes REST config.
 // It constructs an authenticated HTTP client using the credentials from the config
 // and derives the KubeArchive hostname from the cluster API host.
+// The client memoizes successful results to avoid redundant API calls.
 // See https://kubearchive.github.io/kubearchive/main/reference/api.html
 func ClientFor(config *rest.Config) (Client, error) {
 	httpClient, err := rest.HTTPClientFor(config)
@@ -64,6 +70,8 @@ func ClientFor(config *rest.Config) (Client, error) {
 		httpClient:          httpClient,
 		kubeArchiveHostname: kubeArchiveHostnameFromClusterHostname(config.Host),
 		scheme:              "https",
+		releasesCache:       make(map[string]konfluxapi.ReleaseList),
+		snapshotsCache:      make(map[string]applicationapi.Snapshot),
 	}, nil
 }
 
