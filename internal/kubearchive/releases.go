@@ -30,7 +30,7 @@ func (k *KubeArchiveHTTPClient) GetReleasesIterator(ctx context.Context, ns stri
 // Returns a ReleaseList containing items and a continue token for the next page (if any).
 func (k *KubeArchiveHTTPClient) getReleases(ctx context.Context, ns, continueToken string) (konfluxapi.ReleaseList, error) {
 	u := &url.URL{
-		Scheme: "https",
+		Scheme: k.scheme,
 		Host:   k.kubeArchiveHostname,
 		Path:   fmt.Sprintf("/apis/appstudio.redhat.com/v1alpha1/namespaces/%s/releases", ns),
 	}

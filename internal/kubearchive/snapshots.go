@@ -15,7 +15,7 @@ import (
 // Returns an error if the snapshot is not found or if the request fails.
 func (k *KubeArchiveHTTPClient) GetSnapshot(ctx context.Context, ns, name string) (applicationapi.Snapshot, error) {
 	u := &url.URL{
-		Scheme: "https",
+		Scheme: k.scheme,
 		Host:   k.kubeArchiveHostname,
 		Path:   fmt.Sprintf("/apis/appstudio.redhat.com/v1alpha1/namespaces/%s/snapshots/%s", ns, name),
 	}
