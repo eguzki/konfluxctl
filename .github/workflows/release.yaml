@@ -26,4 +26,4 @@ jobs:
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
           goversion: 1.23.6
-          ldflags: -X "github.com/kuadrant/kuadrantctl/cmd.gitSHA=${{ github.sha }}" -X "github.com/kuadrant/kuadrantctl/cmd.version=${{ github.ref_name }}"
+          ldflags: -X "github.com/eguzki/konfluxctl/cmd.gitSHA=${{ github.sha }}" -X "github.com/eguzki/konfluxctl/cmd.version=${{ github.ref_name }}"
