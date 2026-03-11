@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
+	"github.com/eguzki/konfluxctl/internal/kubearchive"
 	"github.com/eguzki/konfluxctl/internal/metadata"
 	"github.com/eguzki/konfluxctl/internal/utils"
 )
@@ -61,7 +62,7 @@ func runMetadata(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create authenticated HTTP client with K8s credentials
-	kubeArchiveClient, err := utils.KubeArchiveClientFor(configuration)
+	kubeArchiveClient, err := kubearchive.ClientFor(configuration)
 	if err != nil {
 		return err
 	}

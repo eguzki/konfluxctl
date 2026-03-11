@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/eguzki/konfluxctl/internal/kubearchive"
 	"github.com/eguzki/konfluxctl/internal/utils"
 )
 
@@ -22,7 +23,7 @@ func (r *ReleasePlanElement) Visit(path *Path) {
 	path.ReleasePlan = &r.Name
 }
 
-func (r *ReleasePlanElement) Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient utils.KubeArchiveClient, imageURL *utils.ImageURL) ([]Element, error) {
+func (r *ReleasePlanElement) Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient kubearchive.Client, imageURL *utils.ImageURL) ([]Element, error) {
 	releaseList := &konfluxapi.ReleaseList{}
 	err := k8sClient.List(ctx, releaseList, client.InNamespace(r.Namespace))
 	if err != nil {

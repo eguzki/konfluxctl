@@ -11,6 +11,7 @@ import (
 	"github.com/samber/lo"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/eguzki/konfluxctl/internal/kubearchive"
 	"github.com/eguzki/konfluxctl/internal/utils"
 )
 
@@ -98,11 +99,11 @@ type Node struct {
 
 type Element interface {
 	Visit(path *Path)
-	Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient utils.KubeArchiveClient, imageURL *utils.ImageURL) ([]Element, error)
+	Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient kubearchive.Client, imageURL *utils.ImageURL) ([]Element, error)
 	String() string
 }
 
-func DepthFirstSearch(ctx context.Context, k8sClient client.Client, kubeArchiveClient utils.KubeArchiveClient, imageURL *utils.ImageURL, elements []Element) ([]Path, error) {
+func DepthFirstSearch(ctx context.Context, k8sClient client.Client, kubeArchiveClient kubearchive.Client, imageURL *utils.ImageURL, elements []Element) ([]Path, error) {
 	completePaths := []Path{}
 	queue := []Node{}
 

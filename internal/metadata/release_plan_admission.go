@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/eguzki/konfluxctl/internal/kubearchive"
 	"github.com/eguzki/konfluxctl/internal/utils"
 )
 
@@ -46,7 +47,7 @@ func (r *ReleasePlanAdmissionElement) Visit(path *Path) {
 	path.ImageTags = r.tags
 }
 
-func (r *ReleasePlanAdmissionElement) Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient utils.KubeArchiveClient, imageURL *utils.ImageURL) ([]Element, error) {
+func (r *ReleasePlanAdmissionElement) Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient kubearchive.Client, imageURL *utils.ImageURL) ([]Element, error) {
 	children := []*konfluxapi.ReleasePlan{}
 	for _, matchedReleasePlan := range r.rawRPA.Status.ReleasePlans {
 		namespacedName := strings.Split(matchedReleasePlan.Name, "/")
@@ -73,7 +74,7 @@ func (r *ReleasePlanAdmissionElement) Children(ctx context.Context, k8sClient cl
 	}), nil
 }
 
-func ReleasePlanAdmissionList(ctx context.Context, k8sClient client.Client, kubeArchiveClient utils.KubeArchiveClient, imageName string) ([]Element, error) {
+func ReleasePlanAdmissionList(ctx context.Context, k8sClient client.Client, kubeArchiveClient kubearchive.Client, imageName string) ([]Element, error) {
 	rpaList := &konfluxapi.ReleasePlanAdmissionList{}
 	err := k8sClient.List(ctx, rpaList, client.InNamespace("rhtap-releng-tenant"))
 	if err != nil {

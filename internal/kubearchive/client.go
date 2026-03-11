@@ -1,4 +1,4 @@
-package utils
+package kubearchive
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type KubeArchiveClient interface {
+type Client interface {
 	GetReleases(ctx context.Context, ns string) (konfluxapi.ReleaseList, error)
 	GetSnapshot(ctx context.Context, ns, name string) (applicationapi.Snapshot, error)
 }
@@ -33,7 +33,7 @@ func kubeArchiveHostnameFromClusterHostname(clusterAPIHost string) string {
 }
 
 // https://kubearchive.github.io/kubearchive/main/reference/api.html
-func KubeArchiveClientFor(config *rest.Config) (KubeArchiveClient, error) {
+func ClientFor(config *rest.Config) (Client, error) {
 	// Create authenticated HTTP client with K8s credentials
 	httpClient, err := rest.HTTPClientFor(config)
 	if err != nil {
@@ -51,7 +51,7 @@ func handleJsonErrResp(resp *http.Response) error {
 		return nil
 	}
 
-	return KubeArchiveErr{
+	return Err{
 		code: resp.StatusCode,
 		err:  string(body),
 	}
@@ -83,7 +83,7 @@ func (k *KubeArchiveHTTPClient) GetReleases(ctx context.Context, ns string) (kon
 	var decodeInto konfluxapi.ReleaseList
 
 	if err := json.NewDecoder(resp.Body).Decode(&decodeInto); err != nil {
-		return konfluxapi.ReleaseList{}, KubeArchiveErr{
+		return konfluxapi.ReleaseList{}, Err{
 			code: resp.StatusCode,
 			err:  fmt.Sprintf("decoding error - %s", err.Error()),
 		}
@@ -118,24 +118,11 @@ func (k *KubeArchiveHTTPClient) GetSnapshot(ctx context.Context, ns, name string
 	var decodeInto applicationapi.Snapshot
 
 	if err := json.NewDecoder(resp.Body).Decode(&decodeInto); err != nil {
-		return applicationapi.Snapshot{}, KubeArchiveErr{
+		return applicationapi.Snapshot{}, Err{
 			code: resp.StatusCode,
 			err:  fmt.Sprintf("decoding error - %s", err.Error()),
 		}
 	}
 
 	return decodeInto, nil
-}
-
-type KubeArchiveErr struct {
-	code int
-	err  string
-}
-
-func (e KubeArchiveErr) Error() string {
-	return fmt.Sprintf("error calling kubearchive system - reason: %s - code: %d", e.err, e.code)
-}
-
-func (e KubeArchiveErr) Code() int {
-	return e.code
 }
