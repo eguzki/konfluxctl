@@ -41,6 +41,7 @@ type ReleaseIterator interface {
 type KubeArchiveHTTPClient struct {
 	httpClient          *http.Client
 	kubeArchiveHostname string
+	scheme              string // defaults to "https", can be overridden for testing
 }
 
 func kubeArchiveHostnameFromClusterHostname(clusterAPIHost string) string {
@@ -62,6 +63,7 @@ func ClientFor(config *rest.Config) (Client, error) {
 	return &KubeArchiveHTTPClient{
 		httpClient:          httpClient,
 		kubeArchiveHostname: kubeArchiveHostnameFromClusterHostname(config.Host),
+		scheme:              "https",
 	}, nil
 }
 
