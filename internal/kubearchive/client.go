@@ -1,3 +1,6 @@
+// Package kubearchive provides a client for interacting with the KubeArchive API.
+// KubeArchive is a system that archives Kubernetes resources for historical queries.
+// See https://kubearchive.github.io/kubearchive/main/reference/api.html
 package kubearchive
 
 import (
@@ -13,12 +16,18 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+// Client provides methods to query archived Konflux resources from KubeArchive.
 type Client interface {
+	// GetReleasesIterator returns an iterator for lazily fetching releases from the archive.
+	// The iterator handles pagination automatically, fetching pages on demand.
 	GetReleasesIterator(ctx context.Context, ns string) ReleaseIterator
+	// GetSnapshot retrieves a specific snapshot by name from the archive.
 	GetSnapshot(ctx context.Context, ns, name string) (applicationapi.Snapshot, error)
 }
 
-// ReleaseIterator provides lazy pagination over releases
+// ReleaseIterator provides lazy pagination over releases.
+// Use Next() to advance through items and Value() to access the current release.
+// Always check Err() after iteration completes to detect any errors.
 type ReleaseIterator interface {
 	// Next advances to the next release. Returns false when no more items or error occurred.
 	Next() bool
@@ -28,6 +37,7 @@ type ReleaseIterator interface {
 	Err() error
 }
 
+// KubeArchiveHTTPClient implements Client using HTTP requests to the KubeArchive API.
 type KubeArchiveHTTPClient struct {
 	httpClient          *http.Client
 	kubeArchiveHostname string
@@ -40,9 +50,11 @@ func kubeArchiveHostnameFromClusterHostname(clusterAPIHost string) string {
 	return fmt.Sprintf("kubearchive-api-server-product-kubearchive.apps.%s", suffix)
 }
 
-// https://kubearchive.github.io/kubearchive/main/reference/api.html
+// ClientFor creates a new KubeArchive client using the provided Kubernetes REST config.
+// It constructs an authenticated HTTP client using the credentials from the config
+// and derives the KubeArchive hostname from the cluster API host.
+// See https://kubearchive.github.io/kubearchive/main/reference/api.html
 func ClientFor(config *rest.Config) (Client, error) {
-	// Create authenticated HTTP client with K8s credentials
 	httpClient, err := rest.HTTPClientFor(config)
 	if err != nil {
 		return nil, err

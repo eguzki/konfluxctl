@@ -6,15 +6,19 @@ import (
 	"strings"
 )
 
+// Err represents an error from the KubeArchive API with an HTTP status code and message.
 type Err struct {
 	code int
 	err  string
 }
 
+// Error returns the error message formatted with the HTTP status code.
+// It implements the error interface.
 func (e Err) Error() string {
 	return fmt.Sprintf("error calling kubearchive system - reason: %s - code: %d", e.err, e.code)
 }
 
+// Code returns the HTTP status code associated with this error.
 func (e Err) Code() int {
 	return e.code
 }
@@ -29,7 +33,7 @@ func codeForError(err error) int {
 	return -1
 }
 
-// codeForError returns the HTTP status for a particular error.
+// messageForError extracts the error message from a particular error.
 func messageForError(err error) string {
 	switch t := err.(type) {
 	case Err:
@@ -55,8 +59,8 @@ func IsUnauthorized(err error) bool {
 	return codeForError(err) == http.StatusUnauthorized
 }
 
-// IsForbidden determines if err is an error which indicates that the request is forbidden and cannot
-// be completed as requested.
+// IsMultipleResourcesFound determines if err is an error which indicates that multiple resources
+// were found when a single resource was expected.
 func IsMultipleResourcesFound(err error) bool {
 	return codeForError(err) == http.StatusInternalServerError &&
 		strings.Contains(messageForError(err), "more than one resource found")

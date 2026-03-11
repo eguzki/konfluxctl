@@ -11,6 +11,9 @@ import (
 	konfluxapi "github.com/konflux-ci/release-service/api/v1alpha1"
 )
 
+// GetReleasesIterator returns an iterator for lazily fetching releases from the specified namespace.
+// The iterator fetches data in pages on demand, using the continue token for pagination.
+// It starts with an empty buffer and fetches the first page on the first call to Next().
 func (k *KubeArchiveHTTPClient) GetReleasesIterator(ctx context.Context, ns string) ReleaseIterator {
 	return &releaseIterator{
 		client:    k,
@@ -22,7 +25,9 @@ func (k *KubeArchiveHTTPClient) GetReleasesIterator(ctx context.Context, ns stri
 	}
 }
 
-// getReleases fetches a page of releases with optional continue token for pagination
+// getReleases fetches a page of releases from the archive with optional pagination.
+// If continueToken is provided, it fetches the next page starting from that token.
+// Returns a ReleaseList containing items and a continue token for the next page (if any).
 func (k *KubeArchiveHTTPClient) getReleases(ctx context.Context, ns, continueToken string) (konfluxapi.ReleaseList, error) {
 	u := &url.URL{
 		Scheme: "https",

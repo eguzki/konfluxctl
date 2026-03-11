@@ -11,6 +11,8 @@ import (
 	applicationapi "github.com/konflux-ci/application-api/api/v1alpha1"
 )
 
+// GetSnapshot retrieves a specific snapshot by name from the specified namespace in the archive.
+// Returns an error if the snapshot is not found or if the request fails.
 func (k *KubeArchiveHTTPClient) GetSnapshot(ctx context.Context, ns, name string) (applicationapi.Snapshot, error) {
 	u := &url.URL{
 		Scheme: "https",
