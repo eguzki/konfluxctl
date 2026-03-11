@@ -30,12 +30,18 @@ func (r *ReleasePlanElement) Children(ctx context.Context, k8sClient client.Clie
 		return nil, err
 	}
 
-	releaseListFromArchive, err := kubeArchiveClient.GetReleases(ctx, r.Namespace)
-	if err != nil {
-		return nil, err
+	var releasesFromArchive []konfluxapi.Release
+
+	iter := kubeArchiveClient.GetReleasesIterator(ctx, r.Namespace)
+
+	for iter.Next() {
+		releasesFromArchive = append(releasesFromArchive, iter.Value())
+	}
+	if iter.Err() != nil {
+		return nil, iter.Err()
 	}
 
-	planReleaseList := lo.Filter(append(releaseList.Items, releaseListFromArchive.Items...), func(release konfluxapi.Release, _ int) bool {
+	planReleaseList := lo.Filter(append(releaseList.Items, releasesFromArchive...), func(release konfluxapi.Release, _ int) bool {
 		return release.Spec.ReleasePlan == r.Name &&
 			meta.IsStatusConditionTrue(release.Status.Conditions, "Released")
 	})

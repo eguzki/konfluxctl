@@ -2,10 +2,8 @@ package kubearchive
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -16,8 +14,18 @@ import (
 )
 
 type Client interface {
-	GetReleases(ctx context.Context, ns string) (konfluxapi.ReleaseList, error)
+	GetReleasesIterator(ctx context.Context, ns string) ReleaseIterator
 	GetSnapshot(ctx context.Context, ns, name string) (applicationapi.Snapshot, error)
+}
+
+// ReleaseIterator provides lazy pagination over releases
+type ReleaseIterator interface {
+	// Next advances to the next release. Returns false when no more items or error occurred.
+	Next() bool
+	// Value returns the current release. Only valid after Next() returns true.
+	Value() konfluxapi.Release
+	// Err returns any error that occurred during iteration.
+	Err() error
 }
 
 type KubeArchiveHTTPClient struct {
@@ -55,74 +63,4 @@ func handleJsonErrResp(resp *http.Response) error {
 		code: resp.StatusCode,
 		err:  string(body),
 	}
-}
-
-func (k *KubeArchiveHTTPClient) GetReleases(ctx context.Context, ns string) (konfluxapi.ReleaseList, error) {
-	u := &url.URL{
-		Scheme: "https",
-		Host:   k.kubeArchiveHostname,
-		Path:   fmt.Sprintf("/apis/appstudio.redhat.com/v1alpha1/namespaces/%s/releases", ns),
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return konfluxapi.ReleaseList{}, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := k.httpClient.Do(req)
-	slog.Debug("kubearchive client", "GetReleases", u.String(), "error", err)
-	if err != nil {
-		return konfluxapi.ReleaseList{}, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return konfluxapi.ReleaseList{}, handleJsonErrResp(resp)
-	}
-
-	var decodeInto konfluxapi.ReleaseList
-
-	if err := json.NewDecoder(resp.Body).Decode(&decodeInto); err != nil {
-		return konfluxapi.ReleaseList{}, Err{
-			code: resp.StatusCode,
-			err:  fmt.Sprintf("decoding error - %s", err.Error()),
-		}
-	}
-
-	return decodeInto, nil
-}
-
-func (k *KubeArchiveHTTPClient) GetSnapshot(ctx context.Context, ns, name string) (applicationapi.Snapshot, error) {
-	u := &url.URL{
-		Scheme: "https",
-		Host:   k.kubeArchiveHostname,
-		Path:   fmt.Sprintf("/apis/appstudio.redhat.com/v1alpha1/namespaces/%s/snapshots/%s", ns, name),
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return applicationapi.Snapshot{}, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := k.httpClient.Do(req)
-	slog.Debug("kubearchive client", "GetSnapshot", u.String(), "error", err)
-	if err != nil {
-		return applicationapi.Snapshot{}, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return applicationapi.Snapshot{}, handleJsonErrResp(resp)
-	}
-
-	var decodeInto applicationapi.Snapshot
-
-	if err := json.NewDecoder(resp.Body).Decode(&decodeInto); err != nil {
-		return applicationapi.Snapshot{}, Err{
-			code: resp.StatusCode,
-			err:  fmt.Sprintf("decoding error - %s", err.Error()),
-		}
-	}
-
-	return decodeInto, nil
 }

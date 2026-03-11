@@ -56,6 +56,7 @@ func (r *ReleaseElement) Children(ctx context.Context, k8sClient client.Client, 
 	}
 
 	if errors.IsNotFound(err) {
+		slog.Debug("snapshot not found in cluster, trying kubearchive", "name", r.Spec.Snapshot, "namespace", r.Namespace)
 		// Only if not found, try kubearchive
 		var kubeArchErr error
 		*snapshot, kubeArchErr = kubeArchiveClient.GetSnapshot(ctx, r.Namespace, r.Spec.Snapshot)
