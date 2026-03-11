@@ -118,7 +118,8 @@ var _ = Describe("KubeArchive Client", func() {
 			server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusNotFound)
-				Expect(w.Write([]byte(`{"error": "not found"}`))).NotTo(HaveOccurred())
+				_, err := w.Write([]byte(`{"error": "not found"}`))
+				Expect(err).NotTo(HaveOccurred())
 			}))
 
 			client = &KubeArchiveHTTPClient{
@@ -138,7 +139,8 @@ var _ = Describe("KubeArchive Client", func() {
 			server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				Expect(w.Write([]byte(`{invalid json`))).NotTo(HaveOccurred())
+				_, err := w.Write([]byte(`{invalid json`))
+				Expect(err).NotTo(HaveOccurred())
 			}))
 
 			client = &KubeArchiveHTTPClient{
@@ -316,7 +318,8 @@ var _ = Describe("KubeArchive Client", func() {
 			server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
-				Expect(w.Write([]byte(`{"error": "unauthorized"}`))).NotTo(HaveOccurred())
+				_, err := w.Write([]byte(`{"error": "unauthorized"}`))
+				Expect(err).NotTo(HaveOccurred())
 			}))
 
 			client = &KubeArchiveHTTPClient{
@@ -358,7 +361,8 @@ var _ = Describe("KubeArchive Client", func() {
 					// Second page fails
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusInternalServerError)
-					Expect(w.Write([]byte(`{"error": "server error"}`))).NotTo(HaveOccurred())
+					_, err := w.Write([]byte(`{"error": "server error"}`))
+					Expect(err).NotTo(HaveOccurred())
 				}
 			}))
 
