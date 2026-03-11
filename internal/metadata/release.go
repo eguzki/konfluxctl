@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	applicationapi "github.com/konflux-ci/application-api/api/v1alpha1"
 	konfluxapi "github.com/konflux-ci/release-service/api/v1alpha1"
 	"github.com/samber/lo"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/eguzki/konfluxctl/internal/kubearchive"
 	"github.com/eguzki/konfluxctl/internal/utils"
 )
 
@@ -41,14 +44,33 @@ func (r *ReleaseElement) Visit(path *Path) {
 	}
 }
 
-func (r *ReleaseElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {
+func (r *ReleaseElement) Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient kubearchive.Client, imageURL *utils.ImageURL) ([]Element, error) {
 	snapshot := &applicationapi.Snapshot{}
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Namespace: r.Namespace,
 		Name:      r.Spec.Snapshot,
 	}, snapshot)
-	if err != nil {
+
+	if err != nil && !errors.IsNotFound(err) {
 		return nil, err
+	}
+
+	if errors.IsNotFound(err) {
+		slog.Debug("snapshot not found in cluster, trying kubearchive", "name", r.Spec.Snapshot, "namespace", r.Namespace)
+		// Only if not found, try kubearchive
+		var kubeArchErr error
+		*snapshot, kubeArchErr = kubeArchiveClient.GetSnapshot(ctx, r.Namespace, r.Spec.Snapshot)
+		if kubearchive.IsNotFound(kubeArchErr) {
+			slog.Debug("snapshot not found", "name", r.Spec.Snapshot, "namespace", r.Namespace)
+			return nil, nil
+		}
+		if kubearchive.IsMultipleResourcesFound(kubeArchErr) {
+			slog.Debug("corrupted snapshot: multiple resources with the same name found", "name", r.Spec.Snapshot, "namespace", r.Namespace)
+			return nil, nil
+		}
+		if kubeArchErr != nil {
+			return nil, kubeArchErr
+		}
 	}
 
 	component, ok := lo.Find(snapshot.Spec.Components, func(comp applicationapi.SnapshotComponent) bool {

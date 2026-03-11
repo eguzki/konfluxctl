@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
+	"github.com/eguzki/konfluxctl/internal/kubearchive"
 	"github.com/eguzki/konfluxctl/internal/metadata"
 	"github.com/eguzki/konfluxctl/internal/utils"
 )
@@ -60,6 +61,12 @@ func runMetadata(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Create authenticated HTTP client with K8s credentials
+	kubeArchiveClient, err := kubearchive.ClientFor(configuration)
+	if err != nil {
+		return err
+	}
+
 	k8sClient, err := client.New(configuration, client.Options{Scheme: scheme})
 	if err != nil {
 		return err
@@ -73,14 +80,14 @@ func runMetadata(cmd *cobra.Command, args []string) error {
 
 	slog.Debug("metadata", "image ref", imageRef)
 
-	rpaList, err := metadata.ReleasePlanAdmissionList(ctx, k8sClient, imageRef.FamiliarName())
+	rpaList, err := metadata.ReleasePlanAdmissionList(ctx, k8sClient, kubeArchiveClient, imageRef.FamiliarName())
 	if err != nil {
 		return err
 	}
 
 	slog.Debug("metadata", "releaseplanadmission (rpa) candidates", len(rpaList))
 
-	paths, err := metadata.DepthFirstSearch(ctx, k8sClient, imageRef, rpaList)
+	paths, err := metadata.DepthFirstSearch(ctx, k8sClient, kubeArchiveClient, imageRef, rpaList)
 	if err != nil {
 		return err
 	}

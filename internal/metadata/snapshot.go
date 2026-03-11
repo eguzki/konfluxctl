@@ -7,6 +7,7 @@ import (
 	applicationapi "github.com/konflux-ci/application-api/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/eguzki/konfluxctl/internal/kubearchive"
 	"github.com/eguzki/konfluxctl/internal/utils"
 )
 
@@ -26,7 +27,7 @@ func (s *SnapshotElement) Visit(path *Path) {
 	path.SourceURL = &s.component.Source.GitSource.URL
 }
 
-func (s *SnapshotElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {
+func (s *SnapshotElement) Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient kubearchive.Client, imageURL *utils.ImageURL) ([]Element, error) {
 	application := &applicationapi.Application{}
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Namespace: s.rawSnapshot.Namespace,

@@ -7,6 +7,7 @@ import (
 	applicationapi "github.com/konflux-ci/application-api/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/eguzki/konfluxctl/internal/kubearchive"
 	"github.com/eguzki/konfluxctl/internal/utils"
 )
 
@@ -20,7 +21,7 @@ func (a *ApplicationElement) Visit(path *Path) {
 	path.Application = &a.Name
 }
 
-func (s *ApplicationElement) Children(ctx context.Context, k8sClient client.Client, imageURL *utils.ImageURL) ([]Element, error) {
+func (s *ApplicationElement) Children(ctx context.Context, k8sClient client.Client, kubeArchiveClient kubearchive.Client, imageURL *utils.ImageURL) ([]Element, error) {
 	// leaf node
 	return nil, nil
 }
